@@ -5,7 +5,7 @@ on:
 
 jobs:
   android:
-    name: Android APK (debug signed)
+    name: Android APK (self-signed, installable)
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -41,14 +41,31 @@ jobs:
       - name: Install Tauri CLI
         run: npm install -D @tauri-apps/cli@latest
 
-      - name: Init & build debug APK
+      - name: Init & build release APK
         run: |
           npx tauri android init --ci
-          npx tauri android build --apk --debug
+          npx tauri android build --apk
+
+      - name: Self-sign APK
+        run: |
+          set -e
+          export ANDROID_HOME=${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}
+          keytool -genkeypair -v -keystore writer.keystore -alias writer \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass writer123 -keypass writer123 \
+            -dname "CN=Writer, OU=Personal, O=Writer, L=Qingyuan, C=CN"
+          APK=$(find src-tauri/gen/android/app/build/outputs/apk -name "*.apk" | grep -v -i "debugSymbols" | head -1)
+          echo "原始包: $APK"
+          APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner 2>/dev/null | tail -1)
+          echo "apksigner: $APKSIGNER"
+          "$APKSIGNER" sign --ks writer.keystore --ks-pass pass:writer123 \
+            --key-pass pass:writer123 --min-sdk-version 24 \
+            --out writer-signed.apk "$APK"
+          "$APKSIGNER" verify --print-certs writer-signed.apk | head -5
+          ls -lh writer-signed.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: writer-android-debug
-          path: |
-            src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          name: writer-android-signed
+          path: writer-signed.apk
           retention-days: 30
