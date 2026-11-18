@@ -80,14 +80,19 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 17
 
-      - uses: android-actions/setup-android@v3
-
-      - name: Install NDK
+      - name: Accept SDK licenses & install NDK
         run: |
-          sdkmanager --install "ndk;26.3.11579264" --sdk_root=$ANDROID_SDK_ROOT
-          echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/26.3.11579264" >> $GITHUB_ENV
+          export ANDROID_HOME=${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}
+          SDKM=$(ls -d $ANDROID_HOME/cmdline-tools/*/bin/sdkmanager 2>/dev/null | tail -1)
+          echo "使用 sdkmanager: $SDKM"
+          yes | "$SDKM" --licenses > /dev/null 2>&1 || true
+          "$SDKM" --install "ndk;26.3.11579264" > /dev/null 2>&1
+          NDK_PATH="$ANDROID_HOME/ndk/26.3.11579264"
+          ls "$NDK_PATH" > /dev/null && echo "NDK 就绪: $NDK_PATH"
+          echo "NDK_HOME=$NDK_PATH" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$NDK_PATH" >> $GITHUB_ENV
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -138,7 +143,11 @@ jobs:
       - name: Build unsigned app
         run: |
           cd src-tauri/gen/apple
-          xcodebuild -project App.xcodeproj -scheme App \
+          echo "生成目录内容："; ls -la
+          PROJ=$(ls -d *.xcodeproj | head -1)
+          SCHEME=$(basename "$PROJ" .xcodeproj)
+          echo "工程: $PROJ  方案: $SCHEME"
+          xcodebuild -project "$PROJ" -scheme "$SCHEME" \
             -configuration Release -sdk iphoneos \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
