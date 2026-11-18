@@ -1,0 +1,22 @@
+/* 移动端安全区适配：保证内容不被状态栏、刘海、底部手势条遮挡 */
+:root {
+  --moyu-sat: env(safe-area-inset-top, 0px);
+  --moyu-sab: env(safe-area-inset-bottom, 0px);
+  --moyu-sal: env(safe-area-inset-left, 0px);
+  --moyu-sar: env(safe-area-inset-right, 0px);
+}
+
+html.moyu-mobile,
+html.moyu-mobile body {
+  min-height: 100%;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+body.moyu-safe {
+  padding-top: var(--moyu-sat) !important;
+  padding-bottom: var(--moyu-sab) !important;
+  padding-left: var(--moyu-sal) !important;
+  padding-right: var(--moyu-sar) !important;
+  box-sizing: border-box !important;
+}

@@ -6,7 +6,7 @@ on:
 jobs:
   ios:
     name: iOS unsigned app
-    runs-on: macos-latest
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
 
@@ -16,7 +16,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+          targets: aarch64-apple-ios
 
       - uses: swatinem/rust-cache@v2
         with:

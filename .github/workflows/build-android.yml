@@ -41,10 +41,17 @@ jobs:
       - name: Install Tauri CLI
         run: npm install -D @tauri-apps/cli@latest
 
-      - name: Init & build release APK
+      - name: Init Android project
+        run: npx tauri android init --ci
+
+      - name: Patch MainActivity safe-area insets
         run: |
-          npx tauri android init --ci
-          npx tauri android build --apk
+          python3 resources/patch-android.py
+          echo "--- 补丁后片段 ---"
+          grep -n -A6 "moyu-safe-area begin" src-tauri/gen/android/app/src/main/java/com/inkwell/moyu/MainActivity.kt
+
+      - name: Build release APK
+        run: npx tauri android build --apk
 
       - name: Self-sign APK
         run: |

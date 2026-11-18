@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Writer",
+  "productName": "墨屿写作",
   "version": "1.0.0",
-  "identifier": "com.patrick.writer",
+  "identifier": "com.inkwell.moyu",
   "build": {
     "frontendDist": "../web"
   },
@@ -10,11 +10,11 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Writer",
+        "title": "墨屿写作",
         "width": 1120,
         "height": 780,
-        "minWidth": 720,
-        "minHeight": 520,
+        "minWidth": 420,
+        "minHeight": 480,
         "resizable": true,
         "center": true
       }
