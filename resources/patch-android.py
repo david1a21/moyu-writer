@@ -2,6 +2,7 @@
 """在 CI 中修复 Android 状态栏遮挡：关闭 Tauri 模板默认的 edge-to-edge。"""
 import pathlib
 import re
+import shutil
 import sys
 
 GEN = pathlib.Path("src-tauri/gen/android")
@@ -28,6 +29,19 @@ def main():
         return 1
     src = f.read_text(encoding="utf-8")
     print(f"[patch] 目标文件: {f}")
+
+    # 1) 应用图标：把 tauri icon 生成的 mipmap 覆盖到工程里
+    src_icons = pathlib.Path("src-tauri/icons/android")
+    res_dst = GEN / "app/src/main/res"
+    if src_icons.is_dir():
+        for item in sorted(src_icons.iterdir()):
+            if item.is_dir():
+                shutil.copytree(item, res_dst / item.name, dirs_exist_ok=True)
+            else:
+                shutil.copy2(item, res_dst / item.name)
+        print(f"[patch] 已覆盖 Android 图标: {sorted(p.name for p in src_icons.iterdir())}")
+    else:
+        print("!! 未找到 src-tauri/icons/android")
 
     if "setDecorFitsSystemWindows" in src:
         print("[patch] 已存在处理，跳过")
