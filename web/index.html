@@ -5039,10 +5039,18 @@ document.addEventListener('drop',e=>{
 });
 
 /* ==================== 输入法 / 可视区适配 ==================== */
+function safeInsetTop(){
+  let p=document.getElementById('__sat_probe');
+  if(!p){p=document.createElement('div');p.id='__sat_probe';
+    p.style.cssText='position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top,0px);pointer-events:none;visibility:hidden;z-index:-1';
+    document.body.appendChild(p);}
+  return Math.round(p.getBoundingClientRect().height)||0;
+}
 function syncViewport(){
   const vv=window.visualViewport;
-  const h=vv?Math.round(vv.height):window.innerHeight;
-  const top=vv?Math.round(vv.offsetTop||0):0;
+  const sat=safeInsetTop();
+  const h=(vv?Math.round(vv.height):window.innerHeight)-sat;
+  const top=(vv?Math.round(vv.offsetTop||0):0)+sat;
   const r=document.documentElement.style;
   r.setProperty('--app-h',h+'px');r.setProperty('--app-top',top+'px');
   const covered=vv?Math.max(0,window.innerHeight-h-top):0;

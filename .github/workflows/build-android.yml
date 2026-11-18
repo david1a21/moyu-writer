@@ -48,7 +48,7 @@ jobs:
         run: |
           python3 resources/patch-android.py
           echo "--- 补丁后片段 ---"
-          grep -n -A6 "moyu-safe-area begin" src-tauri/gen/android/app/src/main/java/com/inkwell/moyu/MainActivity.kt
+          grep -rn -A3 "moyu-safe-area begin" src-tauri/gen/android/app/src/main/ || true
 
       - name: Build release APK
         run: npx tauri android build --apk
