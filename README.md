@@ -30,9 +30,9 @@
 
 | 平台 | 文件 | 说明 |
 | --- | --- | --- |
-| Windows | `Writer_1.0.0_x64-setup.exe` / `.msi` | 双击安装；未签名，SmartScreen 提示时选「更多信息 → 仍要运行」 |
-| macOS | `Writer_1.0.0_universal.dmg` | Intel 与 Apple Silicon 通用；首次打开请右键 →「打开」 |
-| Android | `墨屿写作-*.apk` | release 包 + 自签名，允许「未知来源」即可安装 |
+| Windows | `Inkwell_1.0.0_x64-setup.exe` / `.msi` | 双击安装；未签名，SmartScreen 提示时选「更多信息 → 仍要运行」 |
+| macOS | `Inkwell_1.0.0_universal.dmg` | Intel 与 Apple Silicon 通用；首次打开请右键 →「打开」 |
+| Android | `Inkwell-1.0.0.apk` | release 包 + 自签名，允许「未知来源」即可安装 |
 | iOS | 无预编译包 | 见下方 [iOS](#ios) 说明，需自行签名安装 |
 
 所有产物在 [Releases](../../releases) 页面，也在 Actions 的 Artifacts 里。

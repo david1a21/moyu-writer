@@ -31,24 +31,13 @@ jobs:
       - name: Build unsigned app
         run: |
           set -e
-          cd src-tauri/gen/apple
-          ls -la
-          PROJ=$(ls -d *.xcodeproj | head -1)
-          echo "工程: $PROJ"
-          xcodebuild -list -project "$PROJ" || true
-          SCHEME=$(xcodebuild -list -project "$PROJ" 2>/dev/null \
-            | awk '/Schemes:/{f=1;next} f&&NF{gsub(/^[ \t]+|[ \t]+$/,"");print;exit}')
-          echo "选用 scheme: $SCHEME"
-          xcodebuild -project "$PROJ" -scheme "$SCHEME" \
-            -configuration Release -sdk iphoneos \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            build
+          npx tauri ios build --help || true
+          npx tauri ios build --no-sign
 
       - name: Package app bundle
         run: |
           cd src-tauri/gen/apple
-          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
+          APP=$(find . -name "*.app" -maxdepth 6 | head -1)
           echo "产物: $APP"
           zip -qry ../Inkwell-iOS-unsigned.zip "$APP"
 
