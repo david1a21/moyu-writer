@@ -1,0 +1,48 @@
+name: Build iOS App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ios:
+    name: iOS unsigned app
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install Tauri CLI
+        run: npm install -D @tauri-apps/cli@latest
+
+      - name: Init iOS project
+        run: npx tauri ios init --ci
+
+      - name: Build unsigned app
+        run: |
+          cd src-tauri/gen/apple
+          echo "生成目录："; ls -la
+          PROJ=$(ls -d *.xcodeproj | head -1)
+          SCHEME=$(basename "$PROJ" .xcodeproj)
+          echo "工程: $PROJ  方案: $SCHEME"
+          xcodebuild -project "$PROJ" -scheme "$SCHEME" \
+            -configuration Release -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: writer-ios-unsigned
+          path: src-tauri/gen/apple/build/Build/Products/Release-iphoneos/*.app
+          retention-days: 30
