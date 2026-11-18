@@ -39,7 +39,7 @@ jobs:
           cd src-tauri/gen/apple
           APP=$(find . -name "*.app" -maxdepth 6 | head -1)
           echo "产物: $APP"
-          zip -qry ../Inkwell-iOS-unsigned.zip "$APP"
+          zip -qry ./Inkwell-iOS-unsigned.zip "$APP"
 
       - uses: actions/upload-artifact@v4
         with:
