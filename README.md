@@ -33,7 +33,7 @@
 | Windows | `Inkwell_1.0.0_x64-setup.exe` / `.msi` | 双击安装；未签名，SmartScreen 提示时选「更多信息 → 仍要运行」 |
 | macOS | `Inkwell_1.0.0_universal.dmg` | Intel 与 Apple Silicon 通用；首次打开请右键 →「打开」 |
 | Android | `Inkwell-1.0.0.apk` | release 包 + 自签名，允许「未知来源」即可安装 |
-| iOS | 无预编译包 | 见下方 [iOS](#ios) 说明，需自行签名安装 |
+| iOS | `Inkwell-iOS-unsigned.zip` | 未签名 `.app`，需用你自己的 Apple ID 自签后安装 |
 
 所有产物在 [Releases](../../releases) 页面，也在 Actions 的 Artifacts 里。
 
@@ -81,7 +81,7 @@
 
 ## iOS
 
-iOS 没有预编译包，原因很实际：`.app` 必须用 Apple ID 签名才能装进真机，而免费签名的证书 7 天失效，我没法替你签。
+这里提供的 `.app` 是**未签名**的：iOS 必须用 Apple ID 签名才能装进真机，免费证书 7 天失效，我无法替你签。下载 `Inkwell-iOS-unsigned.zip` 后，用 AltStore / SideStore / Sideloadly 配合你自己的 Apple ID 签名即可安装。
 
 三条可行路径：
 
