@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "墨屿写作",
+  "productName": "Inkwell",
   "version": "1.0.0",
   "identifier": "com.inkwell.moyu",
   "build": {

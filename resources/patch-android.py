@@ -47,6 +47,18 @@ def main():
     f.write_text(src, encoding="utf-8")
     print("[patch] 已在 super.onCreate 之后插入 setDecorFitsSystemWindows(true)")
 
+    # 应用显示名改成中文（Android 桌面图标下方文字）
+    for v in GEN.rglob("strings.xml"):
+        if "values/strings.xml" in str(v).replace("\\", "/"):
+            txt = v.read_text(encoding="utf-8")
+            if 'name="app_name"' in txt and "墨屿写作" not in txt:
+                import re as _re
+                txt = _re.sub(r'<string name="app_name">[^<]*</string>',
+                              '<string name="app_name">墨屿写作</string>', txt)
+                v.write_text(txt, encoding="utf-8")
+                print(f"[patch] 应用名已改为 墨屿写作: {v}")
+            break
+
     print("---- 修改后关键行 ----")
     for line in src.splitlines():
         if any(k in line for k in ("class MainActivity", "onCreate", "EdgeToEdge", "setDecorFits")):
