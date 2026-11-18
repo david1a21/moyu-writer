@@ -4,122 +4,169 @@
 
 # 墨屿写作 · INKWELL STUDIO
 
-**一个把「写作」当成正事的离线写作工作台。**
-书架子管理、专注编辑器、云端同步，全部装进一个不到 25 MB 的客户端里。
+**一屿墨水，把写作放回安静的地方。**
+单文件写作台，打包成 Windows / macOS / Android / iOS 原生应用，内置坚果云同步。
 
-<sub>Desktop · Windows / macOS / Linux &nbsp;|&nbsp; Mobile · Android / iOS</sub>
-
-<img src="docs/screenshot.png" width="820" alt="墨屿写作主界面" />
+[![Windows](https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows&logoColor=white)](#下载)
+[![macOS](https://img.shields.io/badge/macOS-11%2B%20Universal-000000?logo=apple&logoColor=white)](#下载)
+[![Android](https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white)](#下载)
+[![iOS](https://img.shields.io/badge/iOS-源码可自签-FA2D55?logo=apple&logoColor=white)](#ios)
+[![Tauri](https://img.shields.io/badge/Tauri-2-24C8DB?logo=tauri&logoColor=white)](https://tauri.app)
+[![License](https://img.shields.io/badge/License-MIT-8C7BF7)](LICENSE)
 
 </div>
 
----
+![书架界面](docs/screenshot-shelf.png)
 
 ## 这是什么
 
-墨屿写作原本是一个单文件 HTML —— 打开浏览器就能写。后来它被装进了 [Tauri 2](https://tauri.app)，于是它有了自己独立的窗口、独立的图标、可以双击安装的身板，以及**不再被浏览器 CORS 挡住**的坚果云同步。
+墨屿写作原本是一个 370KB 的单文件 HTML：一个能在浏览器里直接打开、双击就能写的写作台。
 
-前端还是那份 HTML，一行没改结构；外层用 Rust 包了一层壳，顺手把云同步的跨域问题解决了。
+这个仓库把它做成了**可以安装的原生应用**：不改变原有界面代码，而是在外面套一层 Tauri 2 的壳，再用 Rust 把浏览器做不到的事补上——读写本地文件、越过 CORS 直连坚果云 WebDAV、多端共享同一份文稿。
 
-## 功能一览
+相比 Electron 版本，安装包从 104MB 降到 4~24MB，冷启动几乎瞬时，内存占用也低一个数量级。
 
-| 能力 | 说明 |
-| --- | --- |
-| 📚 书架管理 | 作品分册、封面、进度一目了然 |
-| ✍️ 专注编辑器 | 所见即所得，排版规则、字数统计、主题切换 |
-| 🎨 三套主题 | 日间、夜间、纸感，长文写作不刺眼 |
-| ☁️ 坚果云同步 | 两条路线：本地同步文件夹 / WebDAV 直连，设置里可切换 |
-| 💾 本地存档 | 原子写入，断电不丢稿 |
-| 🌙 移动端适配 | 状态栏、刘海、手势条全部避让 |
+## 下载
 
-## 下载安装
-
-前往 **[Releases](https://github.com/david1a21/moyu-writer/releases)** 页面下载对应平台的文件。
-
-| 平台 | 文件 | 安装方式 |
+| 平台 | 文件 | 说明 |
 | --- | --- | --- |
-| Windows | `墨屿写作_*_x64-setup.exe` | 双击安装；SmartScreen 拦截时点「更多信息 → 仍要运行」 |
-| Windows | `墨屿写作_*_x64_en-US.msi` | 域控 / 企业环境用这个 |
-| macOS | `墨屿写作_*_universal.dmg` | 拖进 Applications；首次打开右键「打开」，或执行 `xattr -dr com.apple.quarantine /Applications/墨屿写作.app` |
-| Android | `墨屿写作-Android.apk` | 允许「未知来源」后安装 |
-| iOS | `墨屿写作-iOS-unsigned.zip` | 未签名 `.app`，需自行用 Apple ID / 开发者证书签名后安装 |
+| Windows | `Writer_1.0.0_x64-setup.exe` / `.msi` | 双击安装；未签名，SmartScreen 提示时选「更多信息 → 仍要运行」 |
+| macOS | `Writer_1.0.0_universal.dmg` | Intel 与 Apple Silicon 通用；首次打开请右键 →「打开」 |
+| Android | `墨屿写作-*.apk` | release 包 + 自签名，允许「未知来源」即可安装 |
+| iOS | 无预编译包 | 见下方 [iOS](#ios) 说明，需自行签名安装 |
 
-> ⚠️ 所有桌面与移动产物均为**未签名**构建。Windows 与 macOS 会有系统安全提示，属于正常现象，不是文件损坏。
+所有产物在 [Releases](../../releases) 页面，也在 Actions 的 Artifacts 里。
 
-## 坚果云同步怎么配
+> 应用均未做代码签名与公证（个人项目，无 Apple / 微软开发者账号）。这不影响功能，只是首次启动会被系统多问一句。
 
-浏览器里的 WebDAV 请求一定会被 CORS 拦死，所以这里做了两层：
+## 功能
 
+墨屿写作本体自带的能力，桌面与手机端一致：
+
+- **书架**：作品、章节、分卷、指南书三态管理，支持「全部 / 未分组 / 最近」
+- **写作页**：宋体中文排版、稿纸模式、字数统计、自动保存、专注模式（隐藏所有界面装饰）
+- **数据**：写作日历与字数统计视图、全库导出
+- **我的**：主题（日间 / 夜间 / 纸张）、字号、行距、编辑区宽度
+- **灵感**：随手记的碎片，可提升为正式作品
+
+外壳额外补上的：
+
+- **本地同步文件夹**：把作品库指向坚果云客户端的本地目录，md / JSON 直接落盘
+- **WebDAV 直连**：Rust 侧发起请求，绕开浏览器 CORS，账号密码只存在本地
+- **原生文件对话框**：导出、导入走系统选择器，不再受浏览器沙箱限制
+- **移动端安全区适配**：状态栏、刘海、手势条不再遮挡内容
+
+## 坚果云同步
+
+设置 → 同步，两条路线二选一，随时可切换。
+
+### 路线 A：本地同步文件夹（推荐，最稳）
+
+1. 电脑装坚果云客户端，任意同步文件夹保持「同步中」
+2. 应用里选择这个文件夹下的 `墨屿/` 目录
+3. 应用直接读写本地文件，坚果云客户端负责上传下载
+
+优点：不依赖网络 API、大文件无限制、坚果云换密码也不影响。
+缺点：手机端没有「本地同步文件夹」概念，此路线仅桌面可用。
+
+### 路线 B：WebDAV 直连
+
+1. 浏览器登录坚果云 → 设置 → 安全选项 → **添加应用密码**（**不能用登录密码**）
+2. 应用内填：服务器 `https://dav.jianguoyun.com/dav/`、邮箱、应用密码
+3. 远程路径默认 `墨屿/inkwell-sync.json`，可自定义
+
+浏览器里做这件事一定会被 CORS 拦掉——这是浏览器安全模型决定的，不是坚果云的问题。墨屿写作把请求交给 Rust 侧的 `proxy_http` 命令，由原生代码带 Basic 认证头直接发出去，把响应回填成一个 `Response` 对象还给前端，所以前端那套同步逻辑一行没改就能跑通。
+
+> 应用密码只保存在本机，不上传、不写进仓库。
+
+## iOS
+
+iOS 没有预编译包，原因很实际：`.app` 必须用 Apple ID 签名才能装进真机，而免费签名的证书 7 天失效，我没法替你签。
+
+三条可行路径：
+
+```bash
+# 1. 有 Mac：本地构建
+git clone https://github.com/david1a21/moyu-writer.git
+cd moyu-writer
+npm install -D @tauri-apps/cli@latest
+npx tauri ios init
+npx tauri ios build          # 需要 Xcode 与已登录的 Apple ID
 ```
-前端 fetch  →  Tauri 命令 proxy_http  →  reqwest  →  https://dav.jianguoyun.com/dav/
+
+```text
+# 2. 没有 Mac：GitHub Actions 出未签名 .app，再用 sideload 工具装
+Actions → Build iOS App → Run workflow → 下载 writer-ios-unsigned（zip 内含 .app）
+用 AltStore / SideStore / Sideloadly 配合你自己的 Apple ID 签名安装
 ```
 
-前端代码完全不用改，`window.fetch` 在启动时被接管道，`http(s)` 请求自动转交 Rust 层发出，回来再包成一个标准 `Response`。失败时回落到原生 fetch。
+```text
+# 3. 只想要源码：src-tauri/gen/apple 由 tauri ios init 生成，不入库
+```
 
-配置步骤：
-
-1. 打开坚果云网页端 → **设置 → 安全选项 → 添加应用密码**，生成一串专用密码（**不是登录密码**）；
-2. 在应用内「设置 → 同步」里选择路线：
-   - **本地同步文件夹**：选一个坚果云客户端的同步目录，读写直接走本地文件，最稳，不依赖网络；
-   - **WebDAV 直连**：填邮箱 + 应用密码，远程路径默认 `墨屿/inkwell-sync.json`；
-3. 点「测试连接」，绿了就说明通了。
-
-## 自己构建
-
-需要 Node 20+、Rust stable，以及各平台的原生依赖（Linux 需 `libwebkit2gtk-4.1-dev`，Windows 需 WebView2，macOS 需 Xcode Command Line Tools）。
+## 本地开发
 
 ```bash
 git clone https://github.com/david1a21/moyu-writer.git
 cd moyu-writer
-npm install
-npx tauri build
+
+# 前置：Rust、Node 18+；Linux 还需 libwebkit2gtk-4.1-dev 等
+npm install -D @tauri-apps/cli@latest
+
+npx tauri dev      # 开发模式
+npx tauri build    # 出安装包
 ```
 
-移动端：
-
-```bash
-npx tauri android init && npx tauri android build --apk
-npx tauri ios init && npx tauri ios build
-```
-
-不想折腾本地环境的话，仓库自带 GitHub Actions 流水线，改完 push 到 `main` 就自动出 Windows / Linux 包；macOS、Android、iOS 各有一条独立工作流，可以在 Actions 页面手动触发，产物在 Artifacts 里取。
-
-## 工程结构
+工程结构：
 
 ```
-.
-├── web/                        # 前端：单文件应用 + 三个注入脚本
-│   ├── index.html              # 墨屿写作主程序
-│   ├── native-fetch-shim.js    # 劫持 fetch，转交 Rust 代理
-│   ├── sync-bridge.js          # 三端统一同步层
-│   ├── mobile-safe.css         # 移动端安全区
-│   └── mobile-safe.js          # 安全区探测
-├── src-tauri/
-│   ├── src/lib.rs              # 命令：存取文件 / WebDAV / 通用代理
-│   ├── src/main.rs
-│   ├── tauri.conf.json
-│   ├── capabilities/           # 权限声明
-│   └── icons/                  # 全平台图标
-├── resources/
-│   ├── patch-android.py        # 给 MainActivity 注入 insets 补丁
-│   └── icon-source.png         # 1024 图标源文件
-└── .github/workflows/          # 桌面 / macOS / Android / iOS 四条流水线
+web/                     界面（原单文件 HTML + 两个注入脚本）
+├── index.html
+├── native-fetch-shim.js 把 window.fetch 劫持到 Rust，绕开 CORS
+└── sync-bridge.js       三端统一的同步层
+src-tauri/
+├── src/lib.rs           save_local / read_local / list_local
+│                        dav_get / dav_put / dav_list / dav_request
+│                        proxy_http（任意方法 + 任意头的通用代理）
+├── tauri.conf.json      产品名、标识、窗口
+└── icons/               由 tauri icon 从一张 1024 PNG 生成的全套尺寸
+resources/patch-android.py   CI 里关闭 Android edge-to-edge，修状态栏遮挡
+.github/workflows/       四条流水线
 ```
 
-## 技术细节
+## 构建流水线
 
-- **Tauri 2 + WRY**：桌面用系统 WebView（WebView2 / WKWebView / WebKitGTK），安装包只有几 MB，内存占用远低于 Electron；
-- **原子写入**：先写临时文件再 `rename`，写一半断电也不会坏档；
-- **TLS 用 `rustls-tls-native-roots`**：坚果云的证书链走系统根证书，避免内置根证书不认导致的手握失败；
-- **Android 安全区**：`ViewCompat.setOnApplyWindowInsetsListener` 读取 system bars + cutout，给根 View 打 padding，即使系统强制 edge-to-edge 也不会压住标题栏；
-- **iOS 安全区**：`viewport-fit=cover` + `env(safe-area-inset-*)` 换算成 CSS 变量，页面按真实安全区留白。
+| Workflow | 触发 | 产出 |
+| --- | --- | --- |
+| `build.yml` | push / 手动 | Windows exe + msi、Linux AppImage + deb |
+| `build-macos.yml` | 手动 | universal dmg |
+| `build-android.yml` | 手动 | 自签名 APK |
+| `build-ios.yml` | 手动 | 未签名 .app（zip） |
 
-## 已知限制
+**关于「每次都要重跑 Actions 吗」——不需要。**
 
-- iOS 产物是未签名 `.app`，真机安装需要自己签名，免费 Apple ID 的有效期是 7 天；
-- macOS 未做公证（notarization），首次打开需手动放行；
-- 坚果云 WebDAV 的写入以整文件为单位，暂未做增量合并，多人同时编辑同一份稿件会以后写覆盖为先。
+- 产物是永久的：一次构建出来的安装包留在 Actions Artifacts（30 天）和 Releases（永久），随时下载，不会因为不重跑而消失
+- 平时改代码 → push 到 main，Windows / Linux 自动出包，你不用管
+- macOS / Android / iOS 是手动触发，只有**改了代码或想更新版本**时才需要点一次
+- 想发新版：改 `tauri.conf.json` 的 `version`，打 tag，跑一遍，传 Release
 
-## License
+代价只有一个：GitHub 免费额度的 macOS runner 排队不稳，iOS 那种十几分钟的构建偶尔会在排队阶段被平台取消，重跑一次通常就好。
 
-MIT © Patrick
+## 为什么是 Tauri 而不是 Electron
+
+|  | Electron | Tauri 2 |
+| --- | --- | --- |
+| 安装包 | 104MB 起 | 4MB（macOS dmg）/ 24MB（APK） |
+| 运行时 | 自带 Chromium | 系统 WebView |
+| 内存 | 高 | 低 |
+| 原生能力 | Node.js | Rust 命令，编译期绑定 |
+
+代价是 Rust 门槛和平台工具链，但换来的是「一个单文件 HTML 变成一个 4MB 的 dmg」。
+
+## 许可
+
+MIT。界面与写作功能归原作者；外壳、同步桥与流水线随本仓库开源。
+
+<div align="center">
+<sub>墨屿 · 写下去就好</sub>
+</div>
