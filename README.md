@@ -18,6 +18,28 @@
 
 ![书架界面](docs/screenshot-shelf.png)
 
+
+## 签名与自动构建
+
+**安卓签名是固定的**：私钥保存在仓库 Secret（`ANDROID_KEYSTORE_BASE64` / `ANDROID_KS_PASS` / `ANDROID_KEY_PASS`），CI 每次都解码同一把钥匙签名。证书指纹：
+
+```
+SHA-256: 68:F3:B4:02:12:CC:C9:94:5F:FF:11:01:FA:E6:22:07:91:4C:97:23:6C:E0:AB:94:A6:E1:BF:24:96:7F:FA:10
+```
+
+所以新版本可以直接覆盖安装，不用卸载旧版。
+
+**自动触发**：推送到 `main` 且改动了 `web/`、`src-tauri/`、`resources/` 或安卓 workflow 时，安卓和桌面会自动开始构建，不用手动点。
+
+**一键构建全部平台**（含 macOS 与 iOS）：
+
+```bash
+GH_TOKEN=ghp_xxx ./scripts/build-all.sh          # 全部
+GH_TOKEN=ghp_xxx ./scripts/build-all.sh android  # 只安卓
+```
+
+脚本会依次触发 workflow、轮询到结束、把产物下载到 `dist/`。macOS 与 iOS 走 macOS runner，按需触发以免消耗额度。
+
 ## 这是什么
 
 墨屿写作原本是一个 370KB 的单文件 HTML：一个能在浏览器里直接打开、双击就能写的写作台。
