@@ -1514,6 +1514,7 @@ body.deck-open .quickbar{opacity:0;pointer-events:none}
 </style>
 <link rel="stylesheet" href="mobile-safe.css">
 <script src="mobile-safe.js"></script>
+<script src="mobile-guard.js"></script>
 <script src="hot-update.js"></script>
 <script src="native-fetch-shim.js"></script>
 <script src="mobile-native.js"></script>
@@ -5048,13 +5049,27 @@ function safeInsetTop(){
     document.body.appendChild(p);}
   return Math.round(p.getBoundingClientRect().height)||0;
 }
+function safeInsetBottom(){
+  let p=document.getElementById('__sab_probe');
+  if(!p){p=document.createElement('div');p.id='__sab_probe';
+    p.style.cssText='position:fixed;bottom:0;left:0;width:0;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden;z-index:-1';
+    document.body.appendChild(p);}
+  return Math.round(p.getBoundingClientRect().height)||0;
+}
 function syncViewport(){
   const vv=window.visualViewport;
   const sat=safeInsetTop();
+  const sb=safeInsetBottom();
   const nat=Math.round(window.__MOYU_STATUS_TOP||0);
   const nav=Math.round(window.__MOYU_NAV_BOTTOM||0);
-  const inset=Math.max(sat,nat);            /* 原生高度与环境变量取较大者，避免重复叠加 */
-  const h=(vv?Math.round(vv.height):window.innerHeight)-inset-nav;
+  /* 若系统已经把 WebView 让进安全区（页面高度 + 上下安全区正好等于屏幕高），
+     就不该再补一次，否则顶/底会出现多余留白；否则才自己做沉浸补偿 */
+  const pageH=Math.round(window.innerHeight);
+  const screenH=Math.round(window.screen.height||pageH);
+  const systemInsets=Math.abs((pageH+sat+sb)-screenH)<=6;
+  const inset=systemInsets?0:Math.max(sat,nat);
+  const bottom=systemInsets?0:Math.max(sb,nav);
+  const h=(vv?Math.round(vv.height):window.innerHeight)-inset-bottom;
   const top=(vv?Math.round(vv.offsetTop||0):0)+inset;
   const r=document.documentElement.style;
   r.setProperty('--app-h',h+'px');r.setProperty('--app-top',top+'px');
