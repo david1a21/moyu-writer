@@ -24,16 +24,11 @@ IMMERSIVE = f"""{MARK_BEGIN}
     )
     val moyuCtrl = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
     moyuCtrl.isAppearanceLightStatusBars = true
-    moyuCtrl.isAppearanceLightNavigationBars = true
+    val moyuRes = resources
+    val moyuStatusId = moyuRes.getIdentifier("status_bar_height", "dimen", "android")
+    val moyuStatusH = if (moyuStatusId > 0) moyuRes.getDimensionPixelSize(moyuStatusId) else 0
     val moyuRoot = findViewById<android.view.ViewGroup>(android.R.id.content)
-    androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(moyuRoot) {{ view, insets ->
-      val bars = androidx.core.view.WindowInsetsCompat
-        .toWindowInsetsCompat(insets, view)
-        .getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
-      view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
-      insets
-    }}
-    androidx.core.view.ViewCompat.requestApplyInsets(moyuRoot)
+    moyuRoot.setPadding(0, moyuStatusH, 0, 0)
     {MARK_END}"""
 
 
