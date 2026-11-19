@@ -30,6 +30,16 @@ IMMERSIVE = f"""{MARK_BEGIN}
     val moyuNavId = moyuRes.getIdentifier("navigation_bar_height", "dimen", "android")
     val moyuNavH = if (moyuNavId > 0) moyuRes.getDimensionPixelSize(moyuNavId) else 0
     val moyuRoot = findViewById<android.view.ViewGroup>(android.R.id.content)
+    androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(moyuRoot) {{ v, insets ->
+      try {{
+        val moyuBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+        moyuFindWebView(v)?.evaluateJavascript(
+          "window.__moyuApplyNativeInsets && window.__moyuApplyNativeInsets(" + moyuBars.top + "," + moyuBars.bottom + ");",
+          null
+        )
+      }} catch (e: Throwable) {{}}
+      v
+    }}
     moyuRoot.postDelayed({{
       moyuFindWebView(moyuRoot)?.evaluateJavascript(
         "window.__moyuApplyNativeInsets && window.__moyuApplyNativeInsets(" + moyuStatusH + "," + moyuNavH + ");",

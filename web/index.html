@@ -5066,7 +5066,11 @@ function syncViewport(){
      就不该再补一次，否则顶/底会出现多余留白；否则才自己做沉浸补偿 */
   const pageH=Math.round(window.innerHeight);
   const screenH=Math.round(window.screen.height||pageH);
-  const systemInsets=Math.abs((pageH+sat+sb)-screenH)<=6;
+  /* 只有在原生没给高度、且 WebView 自己报了安全区时，才认为系统已经让位；
+     安卓全屏时 env 安全区为 0，绝不能因此把补偿清零，否则顶栏会被状态栏盖住 */
+  const told=nat>0||nav>0;
+  const hasEnv=(sat+sb)>0;
+  const systemInsets=!told&&hasEnv&&Math.abs((pageH+sat+sb)-screenH)<=6;
   const inset=systemInsets?0:Math.max(sat,nat);
   const bottom=systemInsets?0:Math.max(sb,nav);
   const h=(vv?Math.round(vv.height):window.innerHeight)-inset-bottom;
