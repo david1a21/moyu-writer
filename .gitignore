@@ -3,3 +3,7 @@ src-tauri/gen/
 node_modules/
 *.tmp*
 .DS_Store
+
+# 签名密钥（仅本地/CI secret）
+writer-release.jks
+*.keystore

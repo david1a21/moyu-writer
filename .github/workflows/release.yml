@@ -1,0 +1,184 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm install -D @tauri-apps/cli@latest
+      - name: Build
+        run: npx tauri build
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: win
+          path: |
+            src-tauri/target/**/release/bundle/nsis/*.exe
+            src-tauri/target/**/release/bundle/msi/*.msi
+          if-no-files-found: error
+
+  android:
+    name: Android
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: SDK / NDK
+        run: |
+          export ANDROID_HOME=${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}
+          SDKM=$(ls -d $ANDROID_HOME/cmdline-tools/*/bin/sdkmanager 2>/dev/null | tail -1)
+          yes | "$SDKM" --licenses > /dev/null 2>&1 || true
+          "$SDKM" --install "ndk;26.3.11579264" > /dev/null 2>&1
+          echo "NDK_HOME=$ANDROID_HOME/ndk/26.3.11579264" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/26.3.11579264" >> $GITHUB_ENV
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm install -D @tauri-apps/cli@latest
+      - name: Init project
+        run: npx tauri android init --ci
+      - name: Patch icons / name / status bar / back key
+        run: |
+          python3 resources/patch-android.py
+      - name: Build release APK
+        run: npx tauri android build --apk
+      - name: Sign APK
+        run: |
+          set -e
+          export ANDROID_HOME=${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}
+          if [ -n "${ANDROID_KEYSTORE_BASE64:-}" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > app.keystore
+            KS=app.keystore
+            PASS="$ANDROID_KEYSTORE_PASS"
+            ALIAS="$ANDROID_KEY_ALIAS"
+          else
+            keytool -genkeypair -v -keystore app.keystore -alias inkwell \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass inkwell123 -keypass inkwell123 \
+              -dname "CN=Inkwell, O=Inkwell, C=CN" > /dev/null
+            KS=app.keystore
+            PASS=inkwell123
+            ALIAS=inkwell
+          fi
+          APK=$(find src-tauri/gen/android/app/build/outputs/apk -name "*.apk" | head -1)
+          SIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | tail -1)
+          "$SIGNER" sign --ks "$KS" --ks-pass "pass:$PASS" --key-pass "pass:$PASS" \
+            --min-sdk-version 24 --out Inkwell-signed.apk "$APK"
+          "$SIGNER" verify --print-certs Inkwell-signed.apk | head -4
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: Inkwell-signed.apk
+          if-no-files-found: error
+
+  macos:
+    name: macOS DMG + iOS ipa
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin,aarch64-apple-ios
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm install -D @tauri-apps/cli@latest
+      - name: Build universal dmg
+        run: npx tauri build --target universal-apple-darwin
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Build unsigned ipa
+        run: |
+          set -e
+          npx tauri ios init --ci
+          npx tauri ios build --no-sign
+          cd src-tauri/gen/apple
+          APP=$(find . -name "*.app" -maxdepth 6 | head -1)
+          echo "app: $APP"
+          rm -rf ipa && mkdir -p ipa/Payload
+          cp -R "$APP" ipa/Payload/
+          cd ipa && zip -qry ../../Inkwell-iOS-unsigned.ipa Payload
+          unzip -l ../Inkwell-iOS-unsigned.ipa | head -8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          path: |
+            src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            src-tauri/gen/apple/Inkwell-iOS-unsigned.ipa
+          if-no-files-found: error
+
+  publish:
+    name: Publish release
+    needs: [windows, android, macos]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Normalize names
+        run: |
+          set -e
+          ls -lh dist
+          TAG=${GITHUB_REF_NAME}
+          [ -f dist/Inkwell-signed.apk ] && mv dist/Inkwell-signed.apk "dist/Inkwell-${TAG}.apk" || true
+          [ -f dist/Inkwell-iOS-unsigned.ipa ] && mv dist/Inkwell-iOS-unsigned.ipa "dist/Inkwell-${TAG}-unsigned.ipa" || true
+          ls -lh dist
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: 墨屿写作 ${{ github.ref_name }}
+          body: |
+            ## 墨屿写作 ${{ github.ref_name }}
+
+            自动构建产物，全部未签名。
+
+            - Windows：`Inkwell_*_x64-setup.exe`（安装）或 `.msi`
+            - macOS：`Inkwell_*_universal.dmg`（右键 → 打开）
+            - Android：`Inkwell-*.apk`（允许未知来源；升级请先卸载旧版）
+            - iOS：`Inkwell-*-unsigned.ipa`（Sideloadly / AltStore 自签后安装）
+          files: |
+            dist/*.exe
+            dist/*.msi
+            dist/*.dmg
+            dist/*.apk
+            dist/*.ipa
+          fail_on_unmatched_files: false

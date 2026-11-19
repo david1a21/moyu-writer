@@ -2,10 +2,17 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'src-tauri/**'
+      - 'resources/**'
+      - '.github/workflows/build-android.yml'
 
 jobs:
   android:
-    name: Android APK (self-signed, installable)
+    name: Android APK (stable signature)
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +51,7 @@ jobs:
       - name: Init Android project
         run: npx tauri android init --ci
 
-      - name: Patch MainActivity safe-area insets
+      - name: Patch Android (status bar / back key / icon / name)
         run: |
           python3 resources/patch-android.py
           echo "--- 补丁后片段 ---"
@@ -53,22 +60,25 @@ jobs:
       - name: Build release APK
         run: npx tauri android build --apk
 
-      - name: Self-sign APK
+      - name: Sign APK with stable keystore
         run: |
           set -e
           export ANDROID_HOME=${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}
-          keytool -genkeypair -v -keystore writer.keystore -alias writer \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass writer123 -keypass writer123 \
-            -dname "CN=Writer, OU=Personal, O=Writer, L=Qingyuan, C=CN"
+          if [ -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "::error::缺少 ANDROID_KEYSTORE_BASE64 secret，无法使用固定签名"
+            exit 1
+          fi
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > release.jks
           APK=$(find src-tauri/gen/android/app/build/outputs/apk -name "*.apk" | grep -v -i "debugSymbols" | head -1)
           echo "原始包: $APK"
           APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner 2>/dev/null | tail -1)
-          echo "apksigner: $APKSIGNER"
-          "$APKSIGNER" sign --ks writer.keystore --ks-pass pass:writer123 \
-            --key-pass pass:writer123 --min-sdk-version 24 \
+          "$APKSIGNER" sign --ks release.jks \
+            --ks-pass "pass:${{ secrets.ANDROID_KS_PASS }}" \
+            --key-pass "pass:${{ secrets.ANDROID_KEY_PASS }}" \
+            --min-sdk-version 24 \
             --out writer-signed.apk "$APK"
-          "$APKSIGNER" verify --print-certs writer-signed.apk | head -5
+          echo "--- 签名证书 ---"
+          "$APKSIGNER" verify --print-certs writer-signed.apk | head -6
           ls -lh writer-signed.apk
 
       - uses: actions/upload-artifact@v4

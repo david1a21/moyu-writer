@@ -5052,8 +5052,9 @@ function syncViewport(){
   const sat=safeInsetTop();
   const nat=Math.round(window.__MOYU_STATUS_TOP||0);
   const nav=Math.round(window.__MOYU_NAV_BOTTOM||0);
-  const h=(vv?Math.round(vv.height):window.innerHeight)-sat-nat-nav;
-  const top=(vv?Math.round(vv.offsetTop||0):0)+sat+nat;
+  const inset=Math.max(sat,nat);            /* 原生高度与环境变量取较大者，避免重复叠加 */
+  const h=(vv?Math.round(vv.height):window.innerHeight)-inset-nav;
+  const top=(vv?Math.round(vv.offsetTop||0):0)+inset;
   const r=document.documentElement.style;
   r.setProperty('--app-h',h+'px');r.setProperty('--app-top',top+'px');
   const covered=vv?Math.max(0,window.innerHeight-h-top):0;
