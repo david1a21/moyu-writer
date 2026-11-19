@@ -38,7 +38,7 @@ IMMERSIVE = f"""{MARK_BEGIN}
           null
         )
       }} catch (e: Throwable) {{}}
-      v
+      insets
     }}
     moyuRoot.postDelayed({{
       moyuFindWebView(moyuRoot)?.evaluateJavascript(
