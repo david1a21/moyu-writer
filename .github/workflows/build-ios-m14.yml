@@ -39,12 +39,22 @@ jobs:
           set -e
           cd src-tauri/gen/apple
           APP=$(find . -name "*.app" -maxdepth 6 | head -1)
+          OUT="$PWD/Inkwell-iOS-unsigned.ipa"
           echo "app: $APP"
-          rm -rf ipa && mkdir -p ipa/Payload
-          cp -R "$APP" ipa/Payload/
-          cd ipa && zip -qry ../../Inkwell-iOS-unsigned.ipa Payload
+          BUILT=$(find . -name "*.ipa" -maxdepth 5 | head -1)
+          echo "CLI 产物: ${BUILT:-无}"
+          if [ -n "$BUILT" ]; then
+            cp "$BUILT" "$OUT"
+            echo "使用 CLI 生成的 ipa"
+          else
+            rm -rf ipa && mkdir -p ipa/Payload
+            cp -R "$APP" ipa/Payload/
+            ( cd ipa && zip -qry "$OUT" Payload )
+            echo "自行封装 Payload 结构"
+          fi
           echo "--- ipa 结构 ---"
-          unzip -l ../Inkwell-iOS-unsigned.ipa | head -12
+          unzip -l "$OUT" | head -12
+          ls -lh "$OUT"
 
       - uses: actions/upload-artifact@v4
         with:
