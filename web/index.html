@@ -1515,6 +1515,7 @@ body.deck-open .quickbar{opacity:0;pointer-events:none}
 <link rel="stylesheet" href="mobile-safe.css">
 <script src="mobile-safe.js"></script>
 <script src="native-fetch-shim.js"></script>
+<script src="mobile-native.js"></script>
 </head>
 <body>
 <div class="app">
@@ -5049,8 +5050,10 @@ function safeInsetTop(){
 function syncViewport(){
   const vv=window.visualViewport;
   const sat=safeInsetTop();
-  const h=(vv?Math.round(vv.height):window.innerHeight)-sat;
-  const top=(vv?Math.round(vv.offsetTop||0):0)+sat;
+  const nat=Math.round(window.__MOYU_STATUS_TOP||0);
+  const nav=Math.round(window.__MOYU_NAV_BOTTOM||0);
+  const h=(vv?Math.round(vv.height):window.innerHeight)-sat-nat-nav;
+  const top=(vv?Math.round(vv.offsetTop||0):0)+sat+nat;
   const r=document.documentElement.style;
   r.setProperty('--app-h',h+'px');r.setProperty('--app-top',top+'px');
   const covered=vv?Math.max(0,window.innerHeight-h-top):0;
@@ -5071,6 +5074,7 @@ function ensureCaretVisible(ta){
   if(y<top+lh*1.1)ta.scrollTop=Math.max(0,y-lh*2);
   else if(y>bot-lh*1.6)ta.scrollTop=y-ta.clientHeight+lh*2.2;
 }
+window.__moyuSyncViewport=syncViewport;
 if(window.visualViewport){
   visualViewport.addEventListener('resize',syncViewport);
   visualViewport.addEventListener('scroll',syncViewport);

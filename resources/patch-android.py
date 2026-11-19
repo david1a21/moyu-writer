@@ -20,16 +20,35 @@ IMMERSIVE = f"""{MARK_BEGIN}
     window.statusBarColor = android.graphics.Color.TRANSPARENT
     window.navigationBarColor = android.graphics.Color.TRANSPARENT
     window.setBackgroundDrawable(
-      android.graphics.drawable.ColorDrawable(android.graphics.Color.parseColor("#F4F6FC"))
+      android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT)
     )
     val moyuCtrl = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
     moyuCtrl.isAppearanceLightStatusBars = true
     val moyuRes = resources
     val moyuStatusId = moyuRes.getIdentifier("status_bar_height", "dimen", "android")
     val moyuStatusH = if (moyuStatusId > 0) moyuRes.getDimensionPixelSize(moyuStatusId) else 0
+    val moyuNavId = moyuRes.getIdentifier("navigation_bar_height", "dimen", "android")
+    val moyuNavH = if (moyuNavId > 0) moyuRes.getDimensionPixelSize(moyuNavId) else 0
     val moyuRoot = findViewById<android.view.ViewGroup>(android.R.id.content)
-    moyuRoot.setPadding(0, moyuStatusH, 0, 0)
-    {MARK_END}"""
+    moyuRoot.postDelayed({{
+      moyuFindWebView(moyuRoot)?.evaluateJavascript(
+        "window.__moyuApplyNativeInsets && window.__moyuApplyNativeInsets(" + moyuStatusH + "," + moyuNavH + ");",
+        null
+      )
+    }}, 800)
+    onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {{
+      override fun handleOnBackPressed() {{
+        val wv = moyuFindWebView(moyuRoot)
+        if (wv == null) {{ finish(); return }}
+        wv.evaluateJavascript(
+          "(function(){{try{{return (window.__moyuHandleBack&&window.__moyuHandleBack())||'0'}}catch(e){{return '0'}}}})()"
+        ) {{ res ->
+          val handled = res != null && res.contains("1")
+          if (!handled) runOnUiThread {{ finish() }}
+        }}
+      }}
+    }})
+    // moyu-safe-area end"""
 
 
 def find_main_activity():
@@ -67,6 +86,29 @@ def patch_app_name():
             break
 
 
+HELPER = """
+
+private fun moyuFindWebView(v: android.view.View): android.webkit.WebView? {
+  if (v is android.webkit.WebView) return v
+  if (v is android.view.ViewGroup) {
+    for (i in 0 until v.childCount) {
+      val r = moyuFindWebView(v.getChildAt(i))
+      if (r != null) return r
+    }
+  }
+  return null
+}
+"""
+
+
+def ensure_helper(f):
+    src = f.read_text(encoding="utf-8")
+    if "fun moyuFindWebView" in src:
+        return
+    f.write_text(src + HELPER, encoding="utf-8")
+    print("[patch] 已追加 moyuFindWebView 辅助函数")
+
+
 def patch_window(f):
     src = f.read_text(encoding="utf-8")
     print(f"[patch] 目标文件: {f}")
@@ -94,6 +136,7 @@ def main():
         return 1
     patch_icons()
     patch_app_name()
+    ensure_helper(f)
     if not patch_window(f):
         return 1
     print("---- 关键行 ----")
