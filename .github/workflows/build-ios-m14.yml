@@ -34,15 +34,20 @@ jobs:
           npx tauri ios build --help || true
           npx tauri ios build --no-sign
 
-      - name: Package app bundle
+      - name: Package ipa
         run: |
+          set -e
           cd src-tauri/gen/apple
           APP=$(find . -name "*.app" -maxdepth 6 | head -1)
-          echo "产物: $APP"
-          zip -qry ./Inkwell-iOS-unsigned.zip "$APP"
+          echo "app: $APP"
+          rm -rf ipa && mkdir -p ipa/Payload
+          cp -R "$APP" ipa/Payload/
+          cd ipa && zip -qry ../../Inkwell-iOS-unsigned.ipa Payload
+          echo "--- ipa 结构 ---"
+          unzip -l ../Inkwell-iOS-unsigned.ipa | head -12
 
       - uses: actions/upload-artifact@v4
         with:
           name: writer-ios-unsigned
-          path: src-tauri/gen/apple/Inkwell-iOS-unsigned.zip
+          path: src-tauri/gen/apple/Inkwell-iOS-unsigned.ipa
           retention-days: 30

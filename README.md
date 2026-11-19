@@ -33,7 +33,7 @@
 | Windows | `Inkwell_1.0.0_x64-setup.exe` / `.msi` | 双击安装；未签名，SmartScreen 提示时选「更多信息 → 仍要运行」 |
 | macOS | `Inkwell_1.0.0_universal.dmg` | Intel 与 Apple Silicon 通用；首次打开请右键 →「打开」 |
 | Android | `Inkwell-1.0.0.apk` | release 包 + 自签名，允许「未知来源」即可安装 |
-| iOS | `Inkwell-iOS-unsigned.zip` | 未签名 `.app`，需用你自己的 Apple ID 自签后安装 |
+| iOS | `Inkwell-1.0.0-unsigned.ipa` | 未签名 ipa，用 Sideloadly / AltStore 配自己的 Apple ID 签一次即可装 |
 
 所有产物在 [Releases](../../releases) 页面，也在 Actions 的 Artifacts 里。
 
@@ -81,7 +81,7 @@
 
 ## iOS
 
-这里提供的 `.app` 是**未签名**的：iOS 必须用 Apple ID 签名才能装进真机，免费证书 7 天失效，我无法替你签。下载 `Inkwell-iOS-unsigned.zip` 后，用 AltStore / SideStore / Sideloadly 配合你自己的 Apple ID 签名即可安装。
+这里提供的 ipa 是**未签名**的：iOS 必须用 Apple ID 签名才能装进真机，免费证书 7 天失效，我无法替你签。下载 `Inkwell-1.0.0-unsigned.ipa` 后，拖进 Sideloadly / AltStore / SideStore，输入自己的 Apple ID 签一次，就能装到手机上。为什么不是「已签名 ipa」：签名需要你的开发者证书私钥，我这里没有，也拿不到。
 
 三条可行路径：
 
@@ -96,8 +96,8 @@ npx tauri ios build          # 需要 Xcode 与已登录的 Apple ID
 
 ```text
 # 2. 没有 Mac：GitHub Actions 出未签名 .app，再用 sideload 工具装
-Actions → Build iOS App → Run workflow → 下载 writer-ios-unsigned（zip 内含 .app）
-用 AltStore / SideStore / Sideloadly 配合你自己的 Apple ID 签名安装
+Actions → Build iOS App → Run workflow → 下载 writer-ios-unsigned（标准 ipa）
+用 AltStore / SideStore / Sideloadly 配合你自己的 Apple ID 签名安装（ipa 已按标准 Payload 结构打包）
 ```
 
 ```text
