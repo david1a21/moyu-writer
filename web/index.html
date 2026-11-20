@@ -4229,6 +4229,8 @@ function renderSyncPage(){
       <p class="sub">选上面任意一种方式。三种都只把数据发到你指定的地址或文件，墨屿本身没有服务器、不收集任何内容。</p>
       ${emptyBox('cloud','本地优先，同步由你决定','不开同步也能完整使用，所有内容自动存在这台设备。')}</div>`;
   }
+  let pkgKB=0;
+  try{ pkgKB=Math.round(JSON.stringify(syncPkg()).length/1024) }catch(e){ pkgKB=0 }
   const logs=(s.log||[]).map(l=>`<div class="l ${l.kind==='ok'?'ok':l.kind==='err'?'err':''}">
     <span class="t">${new Date(l.t).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}</span>
     <span>${esc(l.msg)}</span></div>`).join('');
@@ -4257,7 +4259,10 @@ function renderSyncPage(){
       <p class="sub">方式：${({off:'未开启',endpoint:'自定义端点',webdav:'坚果云 / WebDAV',file:'同步文件'})[mode]}
         · 状态：${({ok:'已同步',pending:'有改动待同步',err:'上次失败',off:'未开启'})[s.state||'off']}
         · 上次成功：${s.lastSync?relTime(s.lastSync):'从未'}
-        · 远端修订：${s.remoteRev||0}</p></div>`;
+        · 远端修订：${s.remoteRev||0}</p>
+      <p class="sub" style="margin-top:8px">同步包 <b>${pkgKB} KB</b>，其中包含：作品与章节、设定、灵感、碎片、统计，
+        以及全部视觉偏好——调墨盘预设、纸纹、背景质感、字重与阴影、光标呼吸、行距字距、
+        高亮规则与强调色、主题与字体。<b>滤镜改动会在约 25 秒后一并推上去</b>。</p></div>`;
   ['syncUrl','syncToken','syncUser','syncPass','syncPath'].forEach(id=>{
     const inp=el.querySelector('#'+id);
     if(inp)inp.addEventListener('change',()=>saveSyncFields());
